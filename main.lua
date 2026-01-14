@@ -71,7 +71,7 @@ end)
 -- SERVER HOP
 -------------------------------------------------
 local function serverHop()
-	local url = "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"
+	local url = "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Desc&limit=100"
 	local data = HttpService:JSONDecode(game:HttpGet(url))
 	if not data or not data.data then return end
 
@@ -128,13 +128,28 @@ task.spawn(function()
 				if not autoFarm then break end
 
 				teleportTo(chest.model)
-				task.wait(0.2)
+				task.wait(0.25)
 
-				fireproximityprompt(chest.prompt)
-				task.wait(0.05)
+				local prompt = chest.prompt
+				if not prompt or not prompt.Parent then
+					continue
+				end
 
-				chest.prompt.Enabled = false
-				task.wait(0.1)
+				-- thử mở rương
+				fireproximityprompt(prompt)
+
+				-- chờ game xử lý (tối đa 1 giây)
+				local t = 0
+				while prompt.Enabled and t < 1 do
+					task.wait(0.1)
+					t += 0.1
+				end
+
+				-- nếu prompt vẫn còn bật => mở chưa thành công, thử lại
+				if prompt.Enabled then
+					fireproximityprompt(prompt)
+					task.wait(0.3)
+				end
 			end
 		end
 
