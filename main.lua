@@ -10,6 +10,7 @@ local root = character:WaitForChild("HumanoidRootPart")
 -- FLAGS
 -------------------------------------------------
 local autoFarm = true
+local openedCount = 0   -- số rương đã mở
 
 -------------------------------------------------
 -- GUI
@@ -18,7 +19,7 @@ local gui = Instance.new("ScreenGui", player.PlayerGui)
 gui.Name = "ChestFarmGUI"
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.fromOffset(240, 170)
+frame.Size = UDim2.fromOffset(240, 200)
 frame.Position = UDim2.fromOffset(100, 100)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
 frame.BorderSizePixel = 0
@@ -33,7 +34,7 @@ title.Font = Enum.Font.GothamBold
 title.TextSize = 14
 
 local countLabel = Instance.new("TextLabel", frame)
-countLabel.Size = UDim2.new(1, 0, 0, 25)
+countLabel.Size = UDim2.new(1, 0, 0, 20)
 countLabel.Position = UDim2.fromOffset(0, 30)
 countLabel.Text = "Chests: 0"
 countLabel.TextColor3 = Color3.fromRGB(200,200,200)
@@ -41,9 +42,18 @@ countLabel.BackgroundTransparency = 1
 countLabel.Font = Enum.Font.Gotham
 countLabel.TextSize = 12
 
+local openedLabel = Instance.new("TextLabel", frame)
+openedLabel.Size = UDim2.new(1, 0, 0, 20)
+openedLabel.Position = UDim2.fromOffset(0, 50)
+openedLabel.Text = "Opened: 0"
+openedLabel.TextColor3 = Color3.fromRGB(120, 255, 120)
+openedLabel.BackgroundTransparency = 1
+openedLabel.Font = Enum.Font.Gotham
+openedLabel.TextSize = 12
+
 local farmBtn = Instance.new("TextButton", frame)
 farmBtn.Size = UDim2.fromOffset(200, 35)
-farmBtn.Position = UDim2.fromOffset(20, 60)
+farmBtn.Position = UDim2.fromOffset(20, 80)
 farmBtn.Text = "AUTO FARM: ON"
 farmBtn.Font = Enum.Font.GothamBold
 farmBtn.TextSize = 13
@@ -53,7 +63,7 @@ Instance.new("UICorner", farmBtn)
 
 local hopBtn = Instance.new("TextButton", frame)
 hopBtn.Size = UDim2.fromOffset(200, 35)
-hopBtn.Position = UDim2.fromOffset(20, 105)
+hopBtn.Position = UDim2.fromOffset(20, 125)
 hopBtn.Text = "SERVER HOP"
 hopBtn.Font = Enum.Font.GothamBold
 hopBtn.TextSize = 13
@@ -122,6 +132,7 @@ task.spawn(function()
 	while true do
 		local chests = getChests()
 		countLabel.Text = "Chests: " .. tostring(#chests)
+		openedLabel.Text = "Opened: " .. tostring(openedCount)
 
 		if autoFarm then
 			for _, chest in ipairs(chests) do
@@ -135,20 +146,26 @@ task.spawn(function()
 					continue
 				end
 
-				-- thử mở rương
+				-- mở rương
 				fireproximityprompt(prompt)
 
-				-- chờ game xử lý (tối đa 1 giây)
+				-- chờ tối đa 1s cho game disable prompt
 				local t = 0
 				while prompt.Enabled and t < 1 do
 					task.wait(0.1)
 					t += 0.1
 				end
 
-				-- nếu prompt vẫn còn bật => mở chưa thành công, thử lại
-				if prompt.Enabled then
+				-- nếu mở thành công
+				if not prompt.Enabled then
+					openedCount += 1
+				else
+					-- thử lại 1 lần
 					fireproximityprompt(prompt)
 					task.wait(0.3)
+					if not prompt.Enabled then
+						openedCount += 1
+					end
 				end
 			end
 		end
